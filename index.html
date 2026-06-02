@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Contraction Timer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0c1220;
+            --card: #151f30;
+            --card2: #1a2540;
+            --accent: #6366f1;
+            --rose: #f43f5e;
+            --text: #f0f4ff;
+            --muted: #8a9bc0;
+            --border: #243050;
+            --green: #22c55e;
+            --yellow: #eab308;
+            --red: #ef4444;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── Setup ── */
+        #setup {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            gap: 20px;
+            max-width: 480px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        #setup .icon { font-size: 48px; }
+        #setup h2 { font-size: 22px; font-weight: 700; text-align: center; }
+        #setup p { color: var(--muted); text-align: center; font-size: 15px; line-height: 1.6; }
+
+        .steps-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .steps-card h3 {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .steps-card ol {
+            padding-left: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .steps-card li { font-size: 14px; color: var(--muted); line-height: 1.55; }
+        .steps-card a { color: var(--accent); text-decoration: none; }
+        .steps-card code {
+            background: var(--bg);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .field {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label { font-size: 13px; color: var(--muted); font-weight: 500; }
+
+        .field input {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 13px 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .field input:focus { border-color: var(--accent); }
+        .field input::placeholder { color: var(--muted); opacity: 0.6; }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            letter-spacing: 0.02em;
+            transition: opacity 0.1s;
+        }
+
+        .btn-primary:active { opacity: 0.8; }
+
+        /* ── App ── */
+        #app { flex: 1; display: none; flex-direction: column; }
+        #app.visible { display: flex; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .heart { color: var(--rose); }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .conn-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .conn-dot.ok { background: var(--green); }
+        .conn-dot.err { background: var(--red); }
+
+        .doula-badge {
+            background: rgba(99,102,241,0.18);
+            color: #818cf8;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .live-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .pulse {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.25; }
+        }
+
+        .btn-share {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 13px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .btn-share:active { opacity: 0.7; }
+
+        /* ── Hero timer ── */
+        .hero {
+            padding: 28px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .phase-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: var(--muted);
+            transition: color 0.2s;
+        }
+
+        .phase-label.active { color: var(--rose); }
+        .phase-label.rest { color: var(--green); }
+
+        .hero-time {
+            font-size: 80px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -3px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .hero-time.contraction { color: var(--rose); }
+
+        .meta-row {
+            display: flex;
+            gap: 28px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .meta-val {
+            font-size: 20px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .meta-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* ── Big button ── */
+        .action-wrap { padding: 4px 18px 6px; }
+
+        .big-btn {
+            width: 100%;
+            padding: 22px;
+            border-radius: 16px;
+            border: none;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            background: var(--accent);
+            color: white;
+            transition: background 0.15s, transform 0.08s;
+        }
+
+        .big-btn.stopping { background: var(--rose); }
+        .big-btn:active { transform: scale(0.97); }
+
+        /* ── History ── */
+        .section {
+            padding: 16px 18px 0;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .btn-clear {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+
+        .btn-clear:hover { color: var(--red); }
+
+        .table-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+        thead th {
+            padding: 9px 12px;
+            text-align: left;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr.new-row { background: rgba(99,102,241,0.07); }
+
+        tbody td { padding: 10px 12px; font-variant-numeric: tabular-nums; }
+
+        .num { color: var(--muted); font-size: 12px; }
+        .time-cell { color: var(--muted); font-size: 13px; }
+
+        .dur-chip {
+            display: inline-block;
+            background: rgba(99,102,241,0.14);
+            color: #a5b4fc;
+            border-radius: 6px;
+            padding: 2px 9px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .int-val { color: var(--muted); }
+        .int-val.warn { color: var(--yellow); font-weight: 600; }
+        .int-val.alert { color: var(--red); font-weight: 700; }
+
+        .empty-row td {
+            padding: 36px 12px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        /* ── Stats bar ── */
+        .stats-row {
+            display: flex;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            flex: 1;
+            padding: 13px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            border-right: 1px solid var(--border);
+        }
+
+        .stat-box:last-child { border-right: none; }
+
+        .stat-num {
+            font-size: 18px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-lbl {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            text-align: center;
+        }
+
+        /* ── 5-1-1 ── */
+        .rule-bar {
+            margin: 10px 18px 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 13px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .rule-label-head {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        .rule-dots { display: flex; gap: 10px; align-items: center; }
+
+        .rdot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rdot-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: background 0.3s;
+        }
+
+        .rdot-circle.met { background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .rdot-circle.partial { background: var(--yellow); }
+
+        .rdot-lbl { font-size: 9px; color: var(--muted); white-space: nowrap; }
+
+        .rule-status {
+            font-size: 13px;
+            color: var(--muted);
+            flex: 1;
+            text-align: right;
+        }
+
+        .rule-status.alert { color: var(--red); font-weight: 700; }
+
+        /* ── Modal ── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 200;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .overlay.hidden { display: none; }
+
+        .modal {
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: slideUp 0.2s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal h2 { font-size: 18px; font-weight: 700; }
+        .modal p { color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+        .url-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 13px;
+            font-family: monospace;
+            word-break: break-all;
+            color: #818cf8;
+            line-height: 1.5;
+        }
+
+        .modal-actions { display: flex; gap: 10px; }
+
+        .btn-copy {
+            flex: 1;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-dismiss {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (min-width: 500px) {
+            .hero-time { font-size: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Setup Screen ── -->
+<div id="setup">
+    <div class="icon">🤰</div>
+    <h2>Contraction Timer</h2>
+    <p>Uses Firebase to sync live with your doula — setup takes about 2 minutes.</p>
+
+    <div class="steps-card">
+        <h3>One-time Setup</h3>
+        <ol>
+            <li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Create a project</li>
+            <li>In the project, go to <strong>Build → Realtime Database</strong> → Create database (start in test mode)</li>
+            <li>In Rules tab, confirm both <code>.read</code> and <code>.write</code> are <code>true</code></li>
+            <li>Copy your Database URL (looks like <code>https://xxx-rtdb.firebaseio.com</code>) and paste below</li>
+        </ol>
+    </div>
+
+    <div class="field">
+        <label>Firebase Database URL</label>
+        <input type="url" id="fbUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com" autocomplete="off" />
+    </div>
+
+    <button class="btn-primary" onclick="saveConfig()">Save &amp; Start Timing</button>
+</div>
+
+<!-- ── Main App ── -->
+<div id="app">
+    <header>
+        <div class="logo">
+            <span class="heart">♥</span>
+            Contraction Timer
+        </div>
+        <div class="header-right">
+            <span class="conn-dot" id="connDot"></span>
+            <span class="doula-badge hidden" id="doulaBadge">Doula View</span>
+            <span class="live-pill hidden" id="livePill"><span class="pulse"></span> Live</span>
+            <button class="btn-share hidden" id="shareBtn" onclick="openShare()">↗ Share</button>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="phase-label" id="phaseLabel">Waiting for first contraction</div>
+        <div class="hero-time" id="heroTime">0:00</div>
+        <div class="meta-row">
+            <div class="meta-item">
+                <span class="meta-val" id="metaLastDur">—</span>
+                <span class="meta-lbl">Last duration</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-val" id="metaLastInt">—</span>
+                <span class="meta-lbl">Last interval</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-val" id="metaCount">0</span>
+                <span class="meta-lbl">Total</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action button (hidden for doula) -->
+    <div class="action-wrap" id="actionWrap">
+        <button class="big-btn" id="bigBtn" onclick="toggle()">Start Contraction</button>
+    </div>
+
+    <!-- History -->
+    <div class="section">
+        <div class="section-head">
+            <span class="section-title">History</span>
+            <button class="btn-clear hidden" id="clearBtn" onclick="clearAll()">Clear all</button>
+        </div>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Time</th>
+                        <th>Duration</th>
+                        <th>Interval</th>
+                    </tr>
+                </thead>
+                <tbody id="histBody"></tbody>
+            </table>
+        </div>
+        <div class="stats-row hidden" id="statsRow">
+            <div class="stat-box">
+                <span class="stat-num" id="sAvgDur">—</span>
+                <span class="stat-lbl">Avg duration</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="sAvgInt">—</span>
+                <span class="stat-lbl">Avg interval</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="sMinInt">—</span>
+                <span class="stat-lbl">Closest</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5-1-1 rule -->
+    <div class="rule-bar">
+        <span class="rule-label-head">5-1-1</span>
+        <div class="rule-dots">
+            <div class="rdot">
+                <span class="rdot-circle" id="dot5"></span>
+                <span class="rdot-lbl">≤5 min</span>
+            </div>
+            <div class="rdot">
+                <span class="rdot-circle" id="dot1"></span>
+                <span class="rdot-lbl">≥1 min</span>
+            </div>
+            <div class="rdot">
+                <span class="rdot-circle" id="dot11"></span>
+                <span class="rdot-lbl">1+ hr</span>
+            </div>
+        </div>
+        <span class="rule-status" id="ruleStatus">Call OB when all 3 are lit</span>
+    </div>
+</div>
+
+<!-- ── Share Modal ── -->
+<div class="overlay hidden" id="modal" onclick="overlayClick(event)">
+    <div class="modal">
+        <h2>Share with your doula</h2>
+        <p>Send her this link. She'll get a live read-only view that updates automatically.</p>
+        <div class="url-box" id="shareUrlBox"></div>
+        <div class="modal-actions">
+            <button class="btn-copy" onclick="copyLink()">Copy link</button>
+            <button class="btn-dismiss" onclick="closeShare()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────
+let FB = localStorage.getItem('ctFbUrl') || '';
+let sessionId = '';
+let isDoula = false;
+let state = { activeStart: null, contractions: [] };
+let sse = null;
+let ticker = null;
+let pollFallback = null;
+
+// ── Bootstrap ─────────────────────────────────────────────────────────
+function init() {
+    const hash = location.hash.replace('#', '');
+    if (hash.startsWith('v-')) {
+        sessionId = hash.slice(2);
+        isDoula = true;
+    } else if (hash) {
+        sessionId = hash;
+    } else {
+        sessionId = randId();
+        location.hash = sessionId;
+    }
+
+    if (!FB) { return; } // show setup
+
+    startApp();
+}
+
+function randId() {
+    return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function saveConfig() {
+    const val = document.getElementById('fbUrlInput').value.trim().replace(/\/$/, '');
+    if (!val.includes('firebaseio.com')) {
+        alert('Please enter a valid Firebase Realtime Database URL (contains firebaseio.com)');
+        return;
+    }
+    FB = val;
+    localStorage.setItem('ctFbUrl', FB);
+    document.getElementById('setup').style.display = 'none';
+    startApp();
+}
+
+function startApp() {
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+
+    if (isDoula) {
+        document.getElementById('doulaBadge').classList.remove('hidden');
+        document.getElementById('livePill').classList.remove('hidden');
+        document.getElementById('actionWrap').classList.add('hidden');
+    } else {
+        document.getElementById('shareBtn').classList.remove('hidden');
+        document.getElementById('clearBtn').classList.remove('hidden');
+    }
+
+    fetch(fbPath())
+        .then(r => r.json())
+        .then(data => { if (data) state = data; renderAll(); })
+        .catch(() => {});
+
+    connectSSE();
+    ticker = setInterval(tick, 500);
+}
+
+// ── Firebase ──────────────────────────────────────────────────────────
+const fbPath = () => `${FB}/sessions/${sessionId}.json`;
+
+async function push() {
+    if (isDoula) return;
+    try {
+        await fetch(fbPath(), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
+        });
+        setConn(true);
+    } catch { setConn(false); }
+}
+
+function connectSSE() {
+    if (sse) sse.close();
+    if (pollFallback) clearInterval(pollFallback);
+
+    try {
+        sse = new EventSource(`${FB}/sessions/${sessionId}.json`);
+
+        sse.addEventListener('put', e => {
+            const d = JSON.parse(e.data);
+            if (d.data) { state = d.data; renderAll(); }
+            setConn(true);
+        });
+
+        sse.addEventListener('patch', e => {
+            const d = JSON.parse(e.data);
+            if (d.data) { Object.assign(state, d.data); renderAll(); }
+        });
+
+        sse.onopen = () => setConn(true);
+        sse.onerror = () => {
+            setConn(false);
+            startPollFallback();
+        };
+    } catch {
+        startPollFallback();
+    }
+}
+
+function startPollFallback() {
+    if (pollFallback) return;
+    pollFallback = setInterval(() => {
+        fetch(fbPath())
+            .then(r => r.json())
+            .then(data => { if (data) { state = data; renderAll(); setConn(true); } })
+            .catch(() => setConn(false));
+    }, 4000);
+}
+
+function setConn(ok) {
+    const d = document.getElementById('connDot');
+    d.className = 'conn-dot ' + (ok ? 'ok' : 'err');
+}
+
+// ── Timer Logic ───────────────────────────────────────────────────────
+function toggle() {
+    if (isDoula) return;
+    state.activeStart ? stop() : start();
+}
+
+function start() {
+    state.activeStart = Date.now();
+    renderAll();
+    push();
+}
+
+function stop() {
+    if (!state.activeStart) return;
+    const now = Date.now();
+    const duration = Math.round((now - state.activeStart) / 1000);
+    const list = state.contractions || [];
+
+    let interval = null;
+    if (list.length > 0) {
+        const prev = list[list.length - 1];
+        interval = Math.round((state.activeStart - prev.end) / 1000);
+    }
+
+    list.push({ id: list.length + 1, start: state.activeStart, end: now, duration, interval });
+    state.contractions = list;
+    state.activeStart = null;
+    renderAll();
+    push();
+}
+
+function clearAll() {
+    if (!confirm('Clear all contraction history?')) return;
+    state = { activeStart: null, contractions: [] };
+    renderAll();
+    push();
+}
+
+// ── Tick ──────────────────────────────────────────────────────────────
+function tick() {
+    const heroEl = document.getElementById('heroTime');
+    const phaseEl = document.getElementById('phaseLabel');
+    const list = state.contractions || [];
+
+    if (state.activeStart) {
+        const s = Math.round((Date.now() - state.activeStart) / 1000);
+        heroEl.textContent = fmt(s);
+        heroEl.className = 'hero-time contraction';
+        phaseEl.textContent = 'Contraction in progress';
+        phaseEl.className = 'phase-label active';
+    } else if (list.length > 0) {
+        const last = list[list.length - 1];
+        const s = Math.round((Date.now() - last.end) / 1000);
+        heroEl.textContent = fmt(s);
+        heroEl.className = 'hero-time';
+        phaseEl.textContent = 'Resting — time since last contraction';
+        phaseEl.className = 'phase-label rest';
+    } else {
+        heroEl.textContent = '0:00';
+        heroEl.className = 'hero-time';
+        phaseEl.textContent = 'Waiting for first contraction';
+        phaseEl.className = 'phase-label';
+    }
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+function renderAll() {
+    tick();
+    renderBtn();
+    renderHistory();
+    renderStats();
+    render511();
+}
+
+function renderBtn() {
+    if (isDoula) return;
+    const btn = document.getElementById('bigBtn');
+    if (state.activeStart) {
+        btn.textContent = 'Stop Contraction';
+        btn.className = 'big-btn stopping';
+    } else {
+        btn.textContent = 'Start Contraction';
+        btn.className = 'big-btn';
+    }
+}
+
+function renderHistory() {
+    const list = (state.contractions || []).slice().reverse();
+    const body = document.getElementById('histBody');
+
+    document.getElementById('metaCount').textContent = list.length;
+
+    if (list.length === 0) {
+        body.innerHTML = '<tr class="empty-row"><td colspan="4">No contractions yet — press Start to begin</td></tr>';
+        document.getElementById('metaLastDur').textContent = '—';
+        document.getElementById('metaLastInt').textContent = '—';
+        return;
+    }
+
+    const latest = list[0];
+    document.getElementById('metaLastDur').textContent = fmt(latest.duration);
+    document.getElementById('metaLastInt').textContent = latest.interval ? fmt(latest.interval) : '—';
+
+    body.innerHTML = list.map((c, i) => {
+        let intClass = 'int-val';
+        if (c.interval !== null) {
+            if (c.interval <= 300) intClass = 'int-val alert';
+            else if (c.interval <= 420) intClass = 'int-val warn';
+        }
+
+        return `<tr class="${i === 0 ? 'new-row' : ''}">
+            <td class="num">${c.id}</td>
+            <td class="time-cell">${fmtClock(c.start)}</td>
+            <td><span class="dur-chip">${fmt(c.duration)}</span></td>
+            <td><span class="${intClass}">${c.interval !== null ? fmt(c.interval) : '—'}</span></td>
+        </tr>`;
+    }).join('');
+}
+
+function renderStats() {
+    const list = state.contractions || [];
+    const row = document.getElementById('statsRow');
+
+    if (list.length < 2) { row.classList.add('hidden'); return; }
+    row.classList.remove('hidden');
+
+    const durs = list.map(c => c.duration);
+    const ints = list.filter(c => c.interval !== null).map(c => c.interval);
+
+    const avg = arr => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+
+    document.getElementById('sAvgDur').textContent = fmt(avg(durs));
+    document.getElementById('sAvgInt').textContent = ints.length ? fmt(avg(ints)) : '—';
+    document.getElementById('sMinInt').textContent = ints.length ? fmt(Math.min(...ints)) : '—';
+}
+
+function render511() {
+    const list = state.contractions || [];
+    const ints = list.filter(c => c.interval !== null).map(c => c.interval);
+    const durs = list.map(c => c.duration);
+
+    const avgInt = ints.length ? ints.reduce((a, b) => a + b, 0) / ints.length : Infinity;
+    const avgDur = durs.length ? durs.reduce((a, b) => a + b, 0) / durs.length : 0;
+    const spanHr = list.length ? (Date.now() - list[0].start) / 3600000 : 0;
+
+    const r5 = avgInt <= 300;
+    const r1 = avgDur >= 55;
+    const r11 = spanHr >= 1;
+
+    const set = (id, met, partial) => {
+        document.getElementById(id).className =
+            'rdot-circle' + (met ? ' met' : partial ? ' partial' : '');
+    };
+
+    set('dot5', r5, avgInt <= 420);
+    set('dot1', r1, avgDur >= 40);
+    set('dot11', r11, spanHr >= 0.5);
+
+    const status = document.getElementById('ruleStatus');
+    if (r5 && r1 && r11) {
+        status.textContent = '⚠️ Consider calling your OB now';
+        status.className = 'rule-status alert';
+    } else {
+        status.textContent = 'Call OB when all 3 are lit';
+        status.className = 'rule-status';
+    }
+}
+
+// ── Share ─────────────────────────────────────────────────────────────
+function openShare() {
+    const url = `${location.origin}${location.pathname}#v-${sessionId}`;
+    document.getElementById('shareUrlBox').textContent = url;
+    document.getElementById('modal').classList.remove('hidden');
+}
+
+function overlayClick(e) {
+    if (e.target.id === 'modal') closeShare();
+}
+
+function closeShare() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+async function copyLink() {
+    const url = document.getElementById('shareUrlBox').textContent;
+    try {
+        await navigator.clipboard.writeText(url);
+        const btn = document.querySelector('.btn-copy');
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = orig, 2000);
+    } catch {
+        prompt('Copy this link:', url);
+    }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function fmt(s) {
+    const m = Math.floor(Math.abs(s) / 60);
+    const sec = Math.abs(s) % 60;
+    return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+function fmtClock(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ── Go ────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
