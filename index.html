@@ -888,7 +888,8 @@ function stop() {
     let interval = null;
     if (list.length > 0) {
         const prev = list[list.length - 1];
-        interval = Math.round((state.activeStart - prev.end) / 1000);
+        const diff = Math.round((state.activeStart - prev.end) / 1000);
+        interval = isNaN(diff) || diff < 0 ? null : diff;
     }
 
     list.push({ id: list.length + 1, start: state.activeStart, end: now, duration, interval });
@@ -1066,8 +1067,9 @@ async function copyLink() {
 
 // ── Helpers ───────────────────────────────────────────────────────────
 function fmt(s) {
-    const m = Math.floor(Math.abs(s) / 60);
-    const sec = Math.abs(s) % 60;
+    if (s === null || s === undefined || isNaN(s) || s < 0) return '—';
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
     return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
