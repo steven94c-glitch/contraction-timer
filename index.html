@@ -137,8 +137,14 @@
         .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
 
         /* ── App ── */
-        #app { flex: 1; display: none; flex-direction: column; }
+        #app { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         #app.visible { display: flex; }
+
+        .scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
         header {
             display: flex;
@@ -300,12 +306,18 @@
             font-weight: 700;
         }
 
-        /* ── Big button ── */
-        .action-wrap { padding: 6px 18px 8px; }
+        /* ── Big button (pinned to bottom) ── */
+        .action-wrap {
+            padding: 12px 18px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+            background: var(--card);
+            border-top: 1.5px solid var(--border);
+            flex-shrink: 0;
+        }
 
         .big-btn {
             width: 100%;
-            padding: 22px;
+            padding: 20px;
             border-radius: 50px;
             border: none;
             font-size: 18px;
@@ -452,7 +464,7 @@
 
         /* ── 5-1-1 ── */
         .rule-bar {
-            margin: 10px 18px 20px;
+            margin: 10px 18px 24px;
             background: var(--card);
             border: 1.5px solid var(--border);
             border-radius: 14px;
@@ -626,84 +638,89 @@
         </div>
     </header>
 
-    <!-- Hero -->
-    <div class="hero">
-        <div class="phase-label" id="phaseLabel">Waiting for first contraction</div>
-        <div class="hero-time" id="heroTime">0:00</div>
-        <div class="meta-row">
-            <div class="meta-item">
-                <span class="meta-val" id="metaLastDur">—</span>
-                <span class="meta-lbl">Last duration</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-val" id="metaLastInt">—</span>
-                <span class="meta-lbl">Last interval</span>
-            </div>
-            <div class="meta-item">
-                <span class="meta-val" id="metaCount">0</span>
-                <span class="meta-lbl">Total</span>
+    <!-- Scrollable content -->
+    <div class="scroll-area">
+
+        <!-- Hero -->
+        <div class="hero">
+            <div class="phase-label" id="phaseLabel">Waiting for first contraction</div>
+            <div class="hero-time" id="heroTime">0:00</div>
+            <div class="meta-row">
+                <div class="meta-item">
+                    <span class="meta-val" id="metaLastDur">—</span>
+                    <span class="meta-lbl">Last duration</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-val" id="metaLastInt">—</span>
+                    <span class="meta-lbl">Last rest</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-val" id="metaCount">0</span>
+                    <span class="meta-lbl">Total</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Action button (hidden for doula) -->
+        <!-- History -->
+        <div class="section">
+            <div class="section-head">
+                <span class="section-title">History</span>
+                <button class="btn-clear hidden" id="clearBtn" onclick="clearAll()">Clear all</button>
+            </div>
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Rest time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="histBody"></tbody>
+                </table>
+            </div>
+            <div class="stats-row hidden" id="statsRow">
+                <div class="stat-box">
+                    <span class="stat-num" id="sAvgDur">—</span>
+                    <span class="stat-lbl">Avg duration</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num" id="sAvgInt">—</span>
+                    <span class="stat-lbl">Avg rest</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-num" id="sMinInt">—</span>
+                    <span class="stat-lbl">Shortest rest</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5-1-1 rule -->
+        <div class="rule-bar">
+            <span class="rule-label-head">5-1-1</span>
+            <div class="rule-dots">
+                <div class="rdot">
+                    <span class="rdot-circle" id="dot5"></span>
+                    <span class="rdot-lbl">≤5 min</span>
+                </div>
+                <div class="rdot">
+                    <span class="rdot-circle" id="dot1"></span>
+                    <span class="rdot-lbl">≥1 min</span>
+                </div>
+                <div class="rdot">
+                    <span class="rdot-circle" id="dot11"></span>
+                    <span class="rdot-lbl">1+ hr</span>
+                </div>
+            </div>
+            <span class="rule-status" id="ruleStatus">Call OB when all 3 are lit</span>
+        </div>
+
+    </div><!-- end scroll-area -->
+
+    <!-- Action button pinned to bottom (hidden for doula) -->
     <div class="action-wrap" id="actionWrap">
         <button class="big-btn" id="bigBtn" onclick="toggle()">Start Contraction</button>
-    </div>
-
-    <!-- History -->
-    <div class="section">
-        <div class="section-head">
-            <span class="section-title">History</span>
-            <button class="btn-clear hidden" id="clearBtn" onclick="clearAll()">Clear all</button>
-        </div>
-        <div class="table-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Time</th>
-                        <th>Duration</th>
-                        <th>Interval</th>
-                    </tr>
-                </thead>
-                <tbody id="histBody"></tbody>
-            </table>
-        </div>
-        <div class="stats-row hidden" id="statsRow">
-            <div class="stat-box">
-                <span class="stat-num" id="sAvgDur">—</span>
-                <span class="stat-lbl">Avg duration</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-num" id="sAvgInt">—</span>
-                <span class="stat-lbl">Avg interval</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-num" id="sMinInt">—</span>
-                <span class="stat-lbl">Closest</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5-1-1 rule -->
-    <div class="rule-bar">
-        <span class="rule-label-head">5-1-1</span>
-        <div class="rule-dots">
-            <div class="rdot">
-                <span class="rdot-circle" id="dot5"></span>
-                <span class="rdot-lbl">≤5 min</span>
-            </div>
-            <div class="rdot">
-                <span class="rdot-circle" id="dot1"></span>
-                <span class="rdot-lbl">≥1 min</span>
-            </div>
-            <div class="rdot">
-                <span class="rdot-circle" id="dot11"></span>
-                <span class="rdot-lbl">1+ hr</span>
-            </div>
-        </div>
-        <span class="rule-status" id="ruleStatus">Call OB when all 3 are lit</span>
     </div>
 </div>
 
@@ -994,8 +1011,8 @@ function renderStats() {
     if (list.length < 2) { row.classList.add('hidden'); return; }
     row.classList.remove('hidden');
 
-    const durs = list.map(c => c.duration);
-    const ints = list.filter(c => c.interval !== null).map(c => c.interval);
+    const durs = list.map(c => Number(c.duration)).filter(n => !isNaN(n) && n >= 0);
+    const ints = list.map(c => Number(c.interval)).filter(n => !isNaN(n) && n >= 0);
 
     const avg = arr => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
 
