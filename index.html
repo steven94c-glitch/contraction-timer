@@ -722,7 +722,7 @@
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────
-let FB = localStorage.getItem('ctFbUrl') || '';
+let FB = '';
 let sessionId = '';
 let isDoula = false;
 let state = { activeStart: null, contractions: [] };
@@ -732,6 +732,17 @@ let pollFallback = null;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────
 function init() {
+    // 1. Try to get Firebase URL from query param (embedded in URL — works across devices)
+    const params = new URLSearchParams(location.search);
+    const dbParam = params.get('db');
+    if (dbParam) {
+        try { FB = atob(dbParam); } catch {}
+    }
+
+    // 2. Fall back to localStorage
+    if (!FB) FB = localStorage.getItem('ctFbUrl') || '';
+
+    // 3. Parse session ID and doula mode from hash
     const hash = location.hash.replace('#', '');
     if (hash.startsWith('v-')) {
         sessionId = hash.slice(2);
@@ -741,6 +752,15 @@ function init() {
     } else {
         sessionId = randId();
         location.hash = sessionId;
+    }
+
+    // 4. If we have a Firebase URL, bake it into the current URL so refreshes & phone work
+    if (FB) {
+        const encoded = btoa(FB);
+        if (!dbParam || dbParam !== encoded) {
+            const newUrl = `${location.pathname}?db=${encoded}${location.hash}`;
+            history.replaceState(null, '', newUrl);
+        }
     }
 
     if (!FB) { return; } // show setup
@@ -760,6 +780,9 @@ function saveConfig() {
     }
     FB = val;
     localStorage.setItem('ctFbUrl', FB);
+    // Bake into URL immediately
+    const encoded = btoa(FB);
+    history.replaceState(null, '', `${location.pathname}?db=${encoded}${location.hash}`);
     document.getElementById('setup').style.display = 'none';
     startApp();
 }
@@ -1014,7 +1037,8 @@ function render511() {
 
 // ── Share ─────────────────────────────────────────────────────────────
 function openShare() {
-    const url = `${location.origin}${location.pathname}#v-${sessionId}`;
+    const encoded = btoa(FB);
+    const url = `${location.origin}${location.pathname}?db=${encoded}#v-${sessionId}`;
     document.getElementById('shareUrlBox').textContent = url;
     document.getElementById('modal').classList.remove('hidden');
 }
